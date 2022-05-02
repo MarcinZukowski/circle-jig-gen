@@ -11,6 +11,9 @@ SH_WIDE = "wide"
 SH_RECTANGLE = "rectangle"
 SH_LINE = "line"
 
+CX = 50
+CY = 50
+
 class Drawer:
 
     GREEN = "green"
@@ -25,7 +28,7 @@ class Drawer:
         self.width = 1
         self.fill = self.NONE
         self.content = ""
-        self.bounds = [0, 0, 0, 0]
+        self.bounds = [min(CX, 0), min(CY, 0), CX, CY]
 
     def inc_bounds(self, x, y):
         self.bounds[0] = min(self.bounds[0], x)
@@ -71,15 +74,17 @@ class Drawer:
         s += self.content
         s += f'</svg>'
 
-        print(f'<!--\n{s}\n-->\n')
-
         try:
             elem = ET.fromstring(s)
             ET.indent(elem, space="  ", level=0)
-            return ET.tostring(elem, encoding='utf8', method='xml').decode()
+            s = ET.tostring(elem, encoding='utf8', method='xml').decode()
+            s = s.replace('ns0:', '').replace(':ns0', '')
+            return s
         except ET.ParseError as e:
             print(e)
             print(f"...{s[e.position[1] - 30 : e.position[1] + 30]}...")
+
+        print(f'<!--\n{s}\n-->\n')
 
 
 
@@ -98,8 +103,6 @@ def main():
                         help="Shape", default=SH_RECTANGLE)
 
     args = parser.parse_args()
-    print(f'<!-- {args} -->\n')
-
     inches = args.inches
 
     # Converts to mm
@@ -152,7 +155,7 @@ def main():
     d = Drawer()
 
     # Hole for the bit
-    d.circle(0, 0, bitDiam / 2, d.RED)
+    d.circle(CX, CY, bitDiam / 2, d.RED)
 
     def compRadius(step, subStep):
         return bitRadius + minRadius + step * stepSize + subStep * stepSize / subSteps
@@ -189,7 +192,7 @@ def main():
             y = - math.sin(angrad) * a
         else:
             assert False, f"Unknown shape: {shape}"
-        return x, y
+        return CX+x, CY+y
 
 
     # Holes for the pins
