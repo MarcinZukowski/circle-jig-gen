@@ -17,7 +17,7 @@ CY = 100
 
 MM2PX = 3.7795
 
-# Dimensions from the center
+# Screw dimensions - from the center
 
 # Self measured
 SCREWS_DEWALT_TRIM = '-30.5mm,-30.5mm,6mm,10mm;-30.5mm,+30.5mm,6mm,10mm;+30.5mm,-30.5mm,6mm,10mm;+30.5mm,+30.5mm,6mm,10mm'
