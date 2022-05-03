@@ -11,8 +11,19 @@ SH_WIDE = "wide"
 SH_RECTANGLE = "rectangle"
 SH_LINE = "line"
 
-CX = 50
-CY = 50
+CX = 100
+CY = 100
+
+MM2PX = 3.7795
+
+# Dimensions from the center
+
+# Self measured
+SCREWS_DEWALT_TRIM = '-30.5mm,-30.5mm,6mm,10mm;-30.5mm,+30.5mm,6mm,10mm;+30.5mm,-30.5mm,6mm,10mm;+30.5mm,+30.5mm,6mm,10mm'
+
+# From https://www.routerforums.com/threads/dw625ek-base-plate.95657/page-2#lg=thread-95657&slide=0
+# Definitely wrong
+SCREWS_DEWALT_625 = '-57.5mm,-15mm,6mm;57.5mm,-15mm,6mm;0mm,75mm,6mm'
 
 class Drawer:
 
@@ -94,6 +105,7 @@ def main():
     parser.add_argument('--minRadius', type=str, default="6in", help='Minimum radius')
     parser.add_argument('--bitDiam', type=str, default="0.25in", help='Bit diameter')
     parser.add_argument('--pinDiam', type=str, default="2mm", help='Pin diameter')
+    parser.add_argument('--cutDiam', type=str, default="1in", help='Cut-hole diameter')
     parser.add_argument('--stepSize', type=str, default="1in", help="Major step size")
     parser.add_argument('--steps', type=int, default=6, help="Major step size")
     parser.add_argument('--subSteps', type=int, default=4, help="Number of substeps")
@@ -101,6 +113,8 @@ def main():
     parser.add_argument('--inches', action="store_true", help="Use inches are units")
     parser.add_argument('--shape', choices=[SH_NARROW, SH_RECTANGLE, SH_LINE, SH_WIDE],
                         help="Shape", default=SH_RECTANGLE)
+    parser.add_argument('--screws', help="Screw holes positions in format: x0,y0,d0[,D1];x1,y1,d1[,D1]",
+                        default=SCREWS_DEWALT_TRIM)
 
     args = parser.parse_args()
     inches = args.inches
@@ -146,16 +160,43 @@ def main():
     bitRadius = bitDiam / 2
     pinDiam = unit(args.pinDiam)
     pinRadius = pinDiam / 2
+    cutRadius = unit(args.cutDiam) / 2
     stepSize = unit(args.stepSize)
     steps = args.steps
     subSteps = args.subSteps
     stepAngle = args.stepAngle
     shape = args.shape
+    screws = args.screws
 
     d = Drawer()
 
     # Hole for the bit
     d.circle(CX, CY, bitDiam / 2, d.RED)
+
+    # Hole for the cut
+    d.circle(CX, CY, cutRadius, d.RED)
+
+    # Screw holes
+    screw_holes = screws.split(";")
+    for screw_hole in screw_holes:
+        attrs = screw_hole.split(",")
+        assert len(attrs) in [3, 4]
+        sx = CX + unit(attrs[0])
+        sy = CY + unit(attrs[1])
+        sr = unit(attrs[2]) / 2
+        d.circle(sx, sy, sr, d.RED)
+        d.cross(sx, sy, 1, d.BLUE)
+        if len(attrs) == 4:
+            sr = unit(attrs[3]) / 2
+            d.circle(sx, sy, sr, d.BLUE)
+
+    # Shape
+    d.circle(CX, CY, 50)
+    d.content += f'''
+        <path d="M {150 + CX * MM2PX} {CY * MM2PX + 100}
+           A 200 200 0 1 1 {150 + CX * MM2PX} {CY * MM2PX - 100}
+           " stroke="black" fill="none"/>
+               '''
 
     def compRadius(step, subStep):
         return bitRadius + minRadius + step * stepSize + subStep * stepSize / subSteps
@@ -194,7 +235,6 @@ def main():
             assert False, f"Unknown shape: {shape}"
         return CX+x, CY+y
 
-
     # Holes for the pins
     for step in range(0, steps):
         for subStep in range(0, subSteps):
@@ -220,12 +260,12 @@ def main():
     for step in range(0, steps):
         s = unitStr(minRadius + step * stepSize)
         x, y = pinHolePosition(step, 0)
-        d.text(0, 0, s, anchor="end", fs=6, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y + 5)*3.7795}) rotate(270)"')
+        d.text(0, 0, s, anchor="end", fs=6, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y + 5)*MM2PX}) rotate(270)"')
         d.line(x, y + 1, x, y + 4, d.BLUE)
         if shape != SH_LINE:
             s = unitStr(minRadius + step * stepSize + (subSteps - 1) * stepSize / subSteps)
             x, y = pinHolePosition(step, subSteps - 1)
-            d.text(0, 0, s, anchor="start", fs=4, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y - 5)*3.7795}) rotate(270)"')
+            d.text(0, 0, s, anchor="start", fs=4, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y - 5)*MM2PX}) rotate(270)"')
             d.line(x, y - 1, x, y - 4, d.BLUE)
 
     if shape != SH_LINE:
