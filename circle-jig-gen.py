@@ -3,6 +3,7 @@
 import argparse
 import xml.etree.ElementTree as ET
 import math
+import sys
 
 svg = ""
 
@@ -24,6 +25,10 @@ SCREWS_DEWALT_TRIM = '-30.5mm,-30.5mm,6mm,10mm;-30.5mm,+30.5mm,6mm,10mm;+30.5mm,
 # From https://www.routerforums.com/threads/dw625ek-base-plate.95657/page-2#lg=thread-95657&slide=0
 # Definitely wrong
 SCREWS_DEWALT_625 = '-57.5mm,-15mm,6mm;57.5mm,-15mm,6mm;0mm,75mm,6mm'
+
+
+def dbg(s):
+    print(str(s), file=sys.stderr)
 
 class Drawer:
 
