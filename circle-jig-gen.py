@@ -32,6 +32,10 @@ def dbg(s):
 
 class Drawer:
 
+    CUT = "red"
+    MARK = "blue"
+    DBG = "#f0f0f0"
+
     GREEN = "green"
     RED = "red"
     BLUE = "blue"
@@ -176,10 +180,10 @@ def main():
     d = Drawer()
 
     # Hole for the bit
-    d.circle(CX, CY, bitDiam / 2, d.RED)
+    d.circle(CX, CY, bitDiam / 2, d.CUT)
 
     # Hole for the cut
-    d.circle(CX, CY, cutRadius, d.RED)
+    d.circle(CX, CY, cutRadius, d.CUT)
 
     # Screw holes
     screw_holes = screws.split(";")
@@ -189,8 +193,8 @@ def main():
         sx = CX + unit(attrs[0])
         sy = CY + unit(attrs[1])
         sr = unit(attrs[2]) / 2
-        d.circle(sx, sy, sr, d.RED)
-        d.cross(sx, sy, 1, d.BLUE)
+        d.circle(sx, sy, sr, d.CUT)
+        d.cross(sx, sy, 1, d.MARK)
         if len(attrs) == 4:
             sr = unit(attrs[3]) / 2
             d.circle(sx, sy, sr, d.BLUE)
@@ -244,7 +248,7 @@ def main():
     for step in range(0, steps):
         for subStep in range(0, subSteps):
             x, y = pinHolePosition(step, subStep)
-            d.circle(x, y, pinRadius, d.RED)
+            d.circle(x, y, pinRadius, d.CUT)
 
     # Per-substep/angle guides
     if shape != SH_LINE:
@@ -265,13 +269,13 @@ def main():
     for step in range(0, steps):
         s = unitStr(minRadius + step * stepSize)
         x, y = pinHolePosition(step, 0)
-        d.text(0, 0, s, anchor="end", fs=6, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y + 5)*MM2PX}) rotate(270)"')
-        d.line(x, y + 1, x, y + 4, d.BLUE)
+        d.text(0, 0, s, anchor="end", fs=6, color=d.MARK, extra=f'transform="translate({(x + 2) *3.7795}, {(y + 5)*MM2PX}) rotate(270)"')
+        d.line(x, y + 1, x, y + 4, d.MARK)
         if shape != SH_LINE:
             s = unitStr(minRadius + step * stepSize + (subSteps - 1) * stepSize / subSteps)
             x, y = pinHolePosition(step, subSteps - 1)
-            d.text(0, 0, s, anchor="start", fs=4, color=d.BLUE, extra=f'transform="translate({(x + 2) *3.7795}, {(y - 5)*MM2PX}) rotate(270)"')
-            d.line(x, y - 1, x, y - 4, d.BLUE)
+            d.text(0, 0, s, anchor="start", fs=4, color=d.MARK, extra=f'transform="translate({(x + 2) *3.7795}, {(y - 5)*MM2PX}) rotate(270)"')
+            d.line(x, y - 1, x, y - 4, d.MARK)
 
     if shape != SH_LINE:
         # Per-angle labels
@@ -279,16 +283,16 @@ def main():
             for subStep in range(1, subSteps):
                 s = "+" + unitStr(subStep * stepSize / subSteps)
                 x, y = pinHolePosition(0, subStep)
-                d.text(x - 2, y + 1, s, anchor="end", fs=4, color=d.BLUE)
+                d.text(x - 2, y + 1, s, anchor="end", fs=4, color=d.MARK)
                 x, y = pinHolePosition(steps - 1, subStep)
-                d.text(x + 2, y + 1, s, anchor="start", fs=4, color=d.BLUE)
+                d.text(x + 2, y + 1, s, anchor="start", fs=4, color=d.MARK)
     else:
         # Minor tick albels
         for step in range(0, steps):
             for subStep in range(1, subSteps):
                 x, y = pinHolePosition(step, subStep)
                 s = "+" + unitStr(subStep * stepSize / subSteps)
-                d.text(0, 0, s, anchor="start", fs=3, color=d.BLUE,
+                d.text(0, 0, s, anchor="start", fs=3, color=d.MARK,
                        extra=f'transform="translate({(x + 1) * 3.7795}, {(y - 2) * 3.7795}) rotate(270)"')
 
     print(d.write())
