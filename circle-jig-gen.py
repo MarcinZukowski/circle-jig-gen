@@ -121,7 +121,8 @@ class Drawer:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate a circle cutting jig.')
+    parser = argparse.ArgumentParser(description='Generate a circle cutting jig.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--minRadius', type=str, default="6in", help='Minimum radius')
     parser.add_argument('--bitDiam', type=str, default="0.25in", help='Bit diameter')
     parser.add_argument('--pinDiam', type=str, default="2mm", help='Pin diameter')
@@ -129,7 +130,7 @@ def main():
     parser.add_argument('--stepSize', type=str, default="1in", help="Major step size")
     parser.add_argument('--steps', type=int, default=6, help="Major step size")
     parser.add_argument('--subSteps', type=int, default=4, help="Number of substeps")
-    parser.add_argument('--stepAngle', type=float, default=3)
+    parser.add_argument('--stepAngle', type=float, default=2, help="Angle between substeps")
     parser.add_argument('--inches', action="store_true", help="Use inches are units")
     parser.add_argument('--shape', choices=[SH_NARROW, SH_RECTANGLE, SH_LINE, SH_WIDE],
                         help="Shape", default=SH_RECTANGLE)
