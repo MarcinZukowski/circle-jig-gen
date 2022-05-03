@@ -81,7 +81,18 @@ class Drawer:
 
     def text(self, x, y, text, color=None, fs=5, anchor="middle", extra=""):
         color = color or self.color
-        self.content += f'<text fill="{color}" x="{x}mm" y="{y}mm" font-size="{fs}mm" text-anchor="{anchor}" {extra}>{text}</text>'
+        self.content += f'<text style="font-family:monospace" fill="{color}" x="{x}mm" y="{y}mm" font-size="{fs}mm" text-anchor="{anchor}" {extra}>{text}</text>'
+
+    # Draw an arc - note, not a generic arc, just an "open face pacman" arc
+    def arc(self, cx, cy, radius, dx, dy, color=None, reverse=False):
+        stroke = self.stroke(color)
+        largeArc = 0 if reverse else 1
+        ymul = -1 if reverse else 1
+        self.content += f"""
+            <path d=" M {(cx + dx) * MM2PX} {(cy + ymul * dy) * MM2PX} A {radius * MM2PX} {radius * MM2PX} 0 {largeArc} 1 {(cx + dx) * MM2PX} {(cy - ymul * dy) * MM2PX}" {stroke}/>
+        """
+        self.inc_bounds(cx - radius, cy - radius)
+        self.inc_bounds(cx + radius, cy + radius)
 
     def write(self):
         minx = self.bounds[0] - self.margin
@@ -124,6 +135,8 @@ def main():
                         help="Shape", default=SH_RECTANGLE)
     parser.add_argument('--screws', help="Screw holes positions in format: x0,y0,d0[,D1];x1,y1,d1[,D1]",
                         default=SCREWS_DEWALT_TRIM)
+    parser.add_argument('--bigCircle', type=str, default="2.5in", help="Shape: Big circle radius")
+    parser.add_argument('--smallCircle', type=str, default="1in", help="Shape: Small circle radius")
 
     args = parser.parse_args()
     inches = args.inches
@@ -176,6 +189,8 @@ def main():
     stepAngle = args.stepAngle
     shape = args.shape
     screws = args.screws
+    bigCircleRadius = unit(args.bigCircle)
+    smallCircleRadius = unit(args.smallCircle)
 
     d = Drawer()
 
@@ -197,15 +212,7 @@ def main():
         d.cross(sx, sy, 1, d.MARK)
         if len(attrs) == 4:
             sr = unit(attrs[3]) / 2
-            d.circle(sx, sy, sr, d.BLUE)
-
-    # Shape
-    d.circle(CX, CY, 50)
-    d.content += f'''
-        <path d="M {150 + CX * MM2PX} {CY * MM2PX + 100}
-           A 200 200 0 1 1 {150 + CX * MM2PX} {CY * MM2PX - 100}
-           " stroke="black" fill="none"/>
-               '''
+            d.circle(sx, sy, sr, d.MARK)
 
     def compRadius(step, subStep):
         return bitRadius + minRadius + step * stepSize + subStep * stepSize / subSteps
@@ -295,7 +302,45 @@ def main():
                 d.text(0, 0, s, anchor="start", fs=3, color=d.MARK,
                        extra=f'transform="translate({(x + 1) * 3.7795}, {(y - 2) * 3.7795}) rotate(270)"')
 
+    # draw shape around
+    bcr = bigCircleRadius
+    scr = smallCircleRadius
+    scd = compRadius(steps, 0)    # small circle distance
+
+    if shape != SH_RECTANGLE:
+        # Angle for the line adjactent to two circles
+        rd = bcr - scr  # radius difference triangle
+        ang = math.acos(rd / scd)
+        dbg(ang)
+
+        # Left arc
+        bx = math.cos(ang) * bcr
+        by = math.sin(ang) * bcr
+        d.circle(CX + bx, CY + by, 1, color=d.DBG)
+        d.circle(CX + bx, CY - by, 1, color=d.DBG)
+        d.arc(CX, CY, bcr, bx, by, color=d.CUT)
+
+        # Right arc
+        sx = math.cos(ang) * scr
+        sy = math.sin(ang) * scr
+        d.circle(CX + scd + sx, CY + sy, 1, color=d.DBG)
+        d.circle(CX + scd + sx, CY - sy, 1, color=d.DBG)
+        d.arc(CX + scd, CY, scr, sx, sy, color=d.CUT, reverse=1)
+
+        # Connecting lines
+        d.line(CX + bx, CY + by, CX + scd + sx, CY + sy, color=d.CUT)
+        d.line(CX + bx, CY - by, CX + scd + sx, CY - sy, color=d.CUT)
+
+    else:
+        # "Rectangle"
+        d.arc(CX, CY, bcr, 0, bcr, color=d.CUT)
+        d.line(CX, CY + bcr, CX + scd + scr, CY + bcr, color=d.CUT)
+        d.line(CX, CY - bcr, CX + scd + scr, CY - bcr, color=d.CUT)
+        d.line(CX + scd + scr, CY - bcr, CX + scd + scr, CY + bcr, color=d.CUT)
+
     print(d.write())
+
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
