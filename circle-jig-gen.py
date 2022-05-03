@@ -12,8 +12,8 @@ SH_WIDE = "wide"
 SH_RECTANGLE = "rectangle"
 SH_LINE = "line"
 
-CX = 100
-CY = 100
+CX = 80
+CY = 80
 
 MM2PX = 3.7795
 
@@ -193,6 +193,9 @@ def main():
     smallCircleRadius = unit(args.smallCircle)
 
     d = Drawer()
+
+    for idx, arg in enumerate(sys.argv):
+        d.text(3, 3 + idx * 3, arg, fs=3, anchor="start", color=d.MARK)
 
     # Hole for the bit
     d.circle(CX, CY, bitDiam / 2, d.CUT)
