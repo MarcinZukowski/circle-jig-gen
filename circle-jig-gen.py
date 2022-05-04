@@ -38,6 +38,7 @@ class Drawer:
 
     CUT = "red"
     MARK = "blue"
+    GUIDE = "green"
     DBG = "#f0f0f0"
 
     GREEN = "green"
@@ -257,7 +258,7 @@ def main():
                 for subStep in range(0, subSteps):
                     x0, y0 = pinHolePosition(0, subStep)
                     x1, y1 = pinHolePosition(steps - 1, subStep)
-                    d.line(x0, y0, x1, y1, d.GREEN, 'stroke-dasharray="10,10" stroke-width="0.5"')
+                    d.line(x0, y0, x1, y1, d.GUIDE, 'stroke-dasharray="10,10" stroke-width="0.5"')
 
             # Per-step/major guides
             if shape != SH_LINE:
@@ -265,7 +266,7 @@ def main():
                     for subStep in range(1, subSteps):
                         x0, y0 = pinHolePosition(step, subStep - 1)
                         x1, y1 = pinHolePosition(step, subStep)
-                        d.line(x0, y0, x1, y1, d.GREEN, 'stroke-dasharray="5, 5" stroke-width="0.25"')
+                        d.line(x0, y0, x1, y1, d.GUIDE, 'stroke-dasharray="5, 5" stroke-width="0.25"')
 
             # Per-step labels
             for step in range(0, steps):
