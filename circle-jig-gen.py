@@ -346,11 +346,12 @@ def main():
         # draw shape around the router base
         d.circle(cx, cy, bigCircleRadius, color=d.CUT)
         # draw a supporting piece
-        x2 = cx + bigCircleRadius + 10 + smallCircleRadius
-        y2 = cy - bigCircleRadius + smallCircleRadius
+        supportRadius = unit("30mm")
+        x2 = cx + bigCircleRadius + 10 + supportRadius
+        y2 = cy - bigCircleRadius + supportRadius
         d.circle(x2, y2, pinRadius, color=d.CUT)
-        d.cross(x2, y2, smallCircleRadius, color=d.MARK)
-        d.circle(x2, y2, smallCircleRadius, color=d.CUT)
+        d.cross(x2, y2, supportRadius, color=d.GUIDE)
+        d.circle(x2, y2, supportRadius, color=d.CUT)
 
     def routerBase(cx, cy, bottom):
         # Hole for the bit
