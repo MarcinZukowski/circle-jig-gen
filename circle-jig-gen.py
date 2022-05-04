@@ -325,8 +325,8 @@ def main():
             d.arc(cx + scd, cy, scr, sx, sy, color=d.CUT, reverse=1)
 
             # Connecting lines
-            d.line(cx + bx, cy + by, cx + scd + sx, CY + sy, color=d.CUT)
-            d.line(cx + bx, cy - by, cx + scd + sx, CY - sy, color=d.CUT)
+            d.line(cx + bx, cy + by, cx + scd + sx, cy + sy, color=d.CUT)
+            d.line(cx + bx, cy - by, cx + scd + sx, cy - sy, color=d.CUT)
 
         else:
             # "Rectangle"
