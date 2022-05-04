@@ -316,7 +316,7 @@ def main():
         scr = smallCircleRadius
         scd = compRadius(steps, 0)    # small circle distance
 
-        if shape != SH_RECTANGLE:
+        if shape in [SH_NARROW, SH_LINE]:
             # Angle for the line adjactent to two circles
             rd = bcr - scr  # radius difference triangle
             ang = math.acos(rd / scd)
