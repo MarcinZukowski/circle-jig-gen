@@ -30,6 +30,8 @@ SCREWS_DEWALT_TRIM = '-30.5mm,-30.5mm,6mm,10mm;-30.5mm,+30.5mm,6mm,10mm;+30.5mm,
 # Definitely wrong
 SCREWS_DEWALT_625 = '-57.5mm,-15mm,6mm;57.5mm,-15mm,6mm;0mm,75mm,6mm'
 
+SLIDES_DEFAULT="0,90,180,270,120,240:25mm:47mm:6mm:10mm"
+
 
 def dbg(s):
     print(str(s), file=sys.stderr)
@@ -148,6 +150,8 @@ def main():
                         help="Shape", default=SH_RECTANGLE)
     parser.add_argument('--screws', help="Screw holes positions in format: x0,y0,d0[,D1];x1,y1,d1[,D1]",
                         default=SCREWS_DEWALT_TRIM)
+    parser.add_argument('--screwSlides', help="Screw slides in format: angle1[,angleN]:rad1:rad2:diam0[:diam1]",
+                        default=SLIDES_DEFAULT)
     parser.add_argument('--bigCircle', type=str, default="2.5in", help="Shape: Big circle radius")
     parser.add_argument('--smallCircle', type=str, default="1in", help="Shape: Small circle radius")
     parser.add_argument('--layers', choices=[LAYER_SINGLE, LAYER_DOUBLE, LAYER_SUPPORT],
@@ -204,6 +208,7 @@ def main():
     stepAngle = args.stepAngle
     shape = args.shape
     screws = args.screws
+    screwSlides = args.screwSlides
     bigCircleRadius = unit(args.bigCircle)
     smallCircleRadius = unit(args.smallCircle)
     layers = args.layers
@@ -361,24 +366,66 @@ def main():
         d.circle(cx, cy, cutRadius, d.CUT)
 
         # Screw holes
-        screw_holes = screws.split(";")
-        for screw_hole in screw_holes:
-            attrs = screw_hole.split(",")
-            assert len(attrs) in [3, 4]
-            sx = cx + unit(attrs[0])
-            sy = cy + unit(attrs[1])
-            sr = unit(attrs[2]) / 2
-            d.cross(sx, sy, 1, d.MARK)
-            if not bottom or len(attrs) == 3:
-                # smaller hole
-                d.circle(sx, sy, sr, d.CUT)
-                if layers == LAYER_SINGLE and len(attrs) == 4:
-                    sr = unit(attrs[3]) / 2
-                    d.circle(sx, sy, sr, d.MARK)
-            elif bottom:
-                if len(attrs) == 4:
-                    sr = unit(attrs[3]) / 2
-                d.circle(sx, sy, sr, d.CUT)
+
+        if screws:
+            screw_holes = screws.split(";")
+            for screw_hole in screw_holes:
+                attrs = screw_hole.split(",")
+                assert len(attrs) in [3, 4]
+                sx = cx + unit(attrs[0])
+                sy = cy + unit(attrs[1])
+                sr = unit(attrs[2]) / 2
+                d.cross(sx, sy, 1, d.MARK)
+                if not bottom or len(attrs) == 3:
+                    # smaller hole
+                    d.circle(sx, sy, sr, d.CUT)
+                    if layers == LAYER_SINGLE and len(attrs) == 4:
+                        sr = unit(attrs[3]) / 2
+                        d.circle(sx, sy, sr, d.MARK)
+                elif bottom:
+                    if len(attrs) == 4:
+                        sr = unit(attrs[3]) / 2
+                    d.circle(sx, sy, sr, d.CUT)
+
+        # Screw slides
+        if screwSlides:
+            attrs = screwSlides.split(':')
+            assert len(attrs) in [4, 5]
+            angs = attrs[0].split(',')
+            rad1 = unit(attrs[1])
+            rad2 = unit(attrs[2])
+            dbg(rad1)
+            diam0 = unit(attrs[3])
+            diam1 = unit(attrs[4]) if len(attrs) == 5 else diam0
+
+            def genSlide(angle, rad1, rad2, diam, color):
+                x0 = cx + math.cos(angle) * rad1
+                y0 = cy + math.sin(angle) * rad1
+                x1 = cx + math.cos(angle) * rad2
+                y1 = cy + math.sin(angle) * rad2
+                d.arc(x0, y0, diam / 2, math.pi / 2, angle, color=color)
+                d.arc(x1, y1, diam / 2, math.pi / 2, math.pi + angle, color=color)
+                lx0 = x0 + math.cos(angle + math.pi / 2) * diam / 2
+                ly0 = y0 + math.sin(angle + math.pi / 2) * diam / 2
+                lx1 = x1 + math.cos(angle + math.pi / 2) * diam / 2
+                ly1 = y1 + math.sin(angle + math.pi / 2) * diam / 2
+                d.line(lx0, ly0, lx1, ly1, color=color)
+                rx0 = x0 + math.cos(angle - math.pi / 2) * diam / 2
+                ry0 = y0 + math.sin(angle - math.pi / 2) * diam / 2
+                rx1 = x1 + math.cos(angle - math.pi / 2) * diam / 2
+                ry1 = y1 + math.sin(angle - math.pi / 2) * diam / 2
+                d.line(rx0, ry0, rx1, ry1, color=color)
+
+            for angDegs in angs:
+                ang = math.radians(float(angDegs))
+                if not bottom or len(attrs) == 4:
+                    # smaller slide
+                    genSlide(ang, rad1, rad2, diam0, color=d.CUT)
+                    if layers == LAYER_SINGLE and len(attrs) == 5:
+                        # larger slide - mark
+                        genSlide(ang, rad1, rad2, diam1, color=d.MARK)
+                elif bottom:
+                    genSlide(ang, rad1, rad2, diam1, color=d.CUT)
 
     def glueGuides(cx, cy):
         radius = bigCircleRadius - 5 * pinRadius
