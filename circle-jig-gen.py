@@ -381,9 +381,11 @@ def main():
                 d.circle(sx, sy, sr, d.CUT)
 
     def glueGuides(cx, cy):
-        d.circle(cx - bigCircleRadius + 5, cy, pinRadius, color=d.CUT)
-        d.circle(cx, cy - bigCircleRadius + 5, pinRadius, color=d.CUT)
-        d.circle(cx, cy + bigCircleRadius - 5, pinRadius, color=d.CUT)
+        radius = bigCircleRadius - 5 * pinRadius
+        for ang in [60, 210, 285]:
+            x = cx + math.cos(math.radians(ang)) * radius
+            y = cy + math.sin(math.radians(ang)) * radius
+            d.circle(x, y, pinRadius, color=d.CUT)
 
     # First layer
     routerBase(CX, CY, bottom=False)
