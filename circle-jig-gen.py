@@ -88,13 +88,20 @@ class Drawer:
         color = color or self.color
         self.content += f'<text style="font-family:monospace" fill="{color}" x="{x}mm" y="{y}mm" font-size="{fs}mm" text-anchor="{anchor}" {extra}>{text}</text>'
 
-    # Draw an arc - note, not a generic arc, just an "open face pacman" arc
-    def arc(self, cx, cy, radius, dx, dy, color=None, reverse=False):
+    # Draw an arc
+    def arc(self, cx, cy, radius, angle, rot, color=None, reverse=False, degrees=False):
         stroke = self.stroke(color)
         largeArc = 0 if reverse else 1
         ymul = -1 if reverse else 1
+        if degrees:
+            angle = math.radians(angle)
+            rot = math.radians(rot)
+        x0 = cx + math.cos(angle + rot) * radius
+        y0 = cy + math.sin(angle + rot) * radius * ymul
+        x1 = cx + math.cos(-angle + rot) * radius
+        y1 = cy + math.sin(-angle + rot) * radius * ymul
         self.content += f"""
-            <path d=" M {(cx + dx) * MM2PX} {(cy + ymul * dy) * MM2PX} A {radius * MM2PX} {radius * MM2PX} 0 {largeArc} 1 {(cx + dx) * MM2PX} {(cy - ymul * dy) * MM2PX}" {stroke}/>
+            <path d=" M {x0 * MM2PX} {y0 * MM2PX} A {radius * MM2PX} {radius * MM2PX} 0 {largeArc} 1 {x1 * MM2PX} {y1 * MM2PX}" {stroke}/>
         """
         self.inc_bounds(cx - radius, cy - radius)
         self.inc_bounds(cx + radius, cy + radius)
@@ -310,19 +317,19 @@ def main():
             ang = math.acos(rd / scd)
             dbg(ang)
 
-            # Left arc
+            # Left arc and connection points
             bx = math.cos(ang) * bcr
             by = math.sin(ang) * bcr
             d.circle(cx + bx, cy + by, 1, color=d.DBG)
             d.circle(cx + bx, cy - by, 1, color=d.DBG)
-            d.arc(cx, cy, bcr, bx, by, color=d.CUT)
+            d.arc(cx, cy, bcr, ang, 0, color=d.CUT)
 
-            # Right arc
+            # Right arc and connection points
             sx = math.cos(ang) * scr
             sy = math.sin(ang) * scr
             d.circle(cx + scd + sx, cy + sy, 1, color=d.DBG)
             d.circle(cx + scd + sx, cy - sy, 1, color=d.DBG)
-            d.arc(cx + scd, cy, scr, sx, sy, color=d.CUT, reverse=1)
+            d.arc(cx + scd, cy, scr, ang, 0, color=d.CUT, reverse=1)
 
             # Connecting lines
             d.line(cx + bx, cy + by, cx + scd + sx, cy + sy, color=d.CUT)
@@ -330,7 +337,7 @@ def main():
 
         else:
             # "Rectangle"
-            d.arc(cx, cy, bcr, 0, bcr, color=d.CUT)
+            d.arc(cx, cy, bcr, math.pi / 2, 0, color=d.CUT)
             d.line(cx, cy + bcr, cx + scd + scr, cy + bcr, color=d.CUT)
             d.line(cx, cy - bcr, cx + scd + scr, cy - bcr, color=d.CUT)
             d.line(cx + scd + scr, cy - bcr, cx + scd + scr, cy + bcr, color=d.CUT)
