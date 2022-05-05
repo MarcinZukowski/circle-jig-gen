@@ -9,7 +9,7 @@ from utils import Drawer, dbg, inches, unit, unitStr
 ANG_90 = 90
 ANG_180 = 180
 
-marks = [15, 22.5, 30, 36, 45, 60, 67.5, 72, 75]
+marks = [15, 18, 22.5, 30, 36, 45, 60, 67.5, 72, 75]
 
 def main():
     parser = argparse.ArgumentParser(description='Generate a set of circle cutting templates.',
@@ -56,12 +56,14 @@ def main():
             d.text(cx + textRadius, cy - textRadius, unitStr(radius), fs=3, color=d.MARK)
             for mark in marks:
                 ang = math.radians(mark)
-                for (r0, r1) in ((radius - stepSize, radius - stepSize + 2), (radius - 2, radius)):
+                for (r0, r1, label) in ((radius - stepSize, radius - stepSize + 2, False), (radius, radius - 2, True)):
                     x0 = math.cos(ang) * r0
                     y0 = math.sin(ang) * r0
                     x1 = math.cos(ang) * r1
                     y1 = math.sin(ang) * r1
                     d.line(cx + x0, cy - y0, cx + x1, cy - y1)
+                    if label:
+                        d.text(cx + x1, cy - y1, mark, fs=2)
             if fence:
                 # Draw fences
                 #   2---------3
