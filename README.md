@@ -18,3 +18,6 @@ Small imperial jig in the "narrow" mode, for 1/4in bit
 
 Larger metric jig in the "rectangle" mode, for 1/2in bit
 ![](examples/jig-rectangle.png)
+
+Set of templates for flush-trim routing
+![](examples/template-simple.png)
