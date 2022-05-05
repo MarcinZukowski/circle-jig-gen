@@ -19,18 +19,15 @@ LAYER_SUPPORT = "support"
 CX = 80
 CY = 80
 
-MM2PX = 3.7795
-
 # Screw dimensions - from the center
-
 # Self measured
 SCREWS_DEWALT_TRIM = '-30.5mm,-30.5mm,6mm,10mm;-30.5mm,+30.5mm,6mm,10mm;+30.5mm,-30.5mm,6mm,10mm;+30.5mm,+30.5mm,6mm,10mm'
-
 # From https://www.routerforums.com/threads/dw625ek-base-plate.95657/page-2#lg=thread-95657&slide=0
 # Definitely wrong
 SCREWS_DEWALT_625 = '-57.5mm,-15mm,6mm;57.5mm,-15mm,6mm;0mm,75mm,6mm'
 
-RAILS_DEFAULT="0,90,180,270,120,240:25mm:47mm:6mm:10mm"
+# Rails for screws - common 1/4 and 1/3 rotation
+RAILS_DEFAULT = "0,90,180,270,120,240:25mm:47mm:6mm:10mm"
 
 
 def dbg(s):
@@ -52,10 +49,10 @@ class Drawer:
     def __init__(self, margin=10):
         self.margin = margin
         self.color = self.GREEN
-        self.width = 1
+        self.width = 0.3
         self.fill = self.NONE
         self.content = ""
-        self.bounds = [min(CX, 0), min(CY, 0), CX, CY]
+        self.bounds = [0, 0, CX, CY]
 
     def inc_bounds(self, x, y):
         self.bounds[0] = min(self.bounds[0], x)
@@ -69,13 +66,13 @@ class Drawer:
         fill = self.fill
         s = f'stroke="{color}" fill="{fill}"'
         if width != 1:
-            s += f' stroke-width="width"'
+            s += f' stroke-width="{width}"'
         return s
 
     def line(self, x0, y0, x1, y1, color=None, extra=""):
         self.inc_bounds(x0, y0)
         self.inc_bounds(x1, y1)
-        self.content += f'<line x1="{x0}mm" y1="{y0}mm" x2="{x1}mm" y2="{y1}mm" {self.stroke(color)} {extra}/>'
+        self.content += f'<line x1="{x0}" y1="{y0}" x2="{x1}" y2="{y1}" {self.stroke(color)} {extra}/>'
 
     def cross(self, x, y, size, color=None):
         self.line(x - size, y, x + size, y, color)
@@ -84,11 +81,11 @@ class Drawer:
     def circle(self, x, y, radius, color=None):
         self.inc_bounds(x - radius, y - radius)
         self.inc_bounds(x + radius, y + radius)
-        self.content += f'<circle cx="{x}mm" cy="{y}mm" r="{radius}mm" {self.stroke(color)}/>'
+        self.content += f'<circle cx="{x}" cy="{y}" r="{radius}" {self.stroke(color)}/>'
 
     def text(self, x, y, text, color=None, fs=5, anchor="middle", extra=""):
         color = color or self.color
-        self.content += f'<text style="font-family:monospace" fill="{color}" x="{x}mm" y="{y}mm" font-size="{fs}mm" text-anchor="{anchor}" {extra}>{text}</text>'
+        self.content += f'<text style="font-family:monospace" fill="{color}" x="{x}" y="{y}" font-size="{fs}" text-anchor="{anchor}" {extra}>{text}</text>'
 
     # Draw an arc
     def arc(self, cx, cy, radius, angle, rot, color=None, reverse=False, degrees=False):
@@ -103,19 +100,20 @@ class Drawer:
         x1 = cx + math.cos(-angle + rot) * radius
         y1 = cy + math.sin(-angle + rot) * radius * ymul
         self.content += f"""
-            <path d=" M {x0 * MM2PX} {y0 * MM2PX} A {radius * MM2PX} {radius * MM2PX} 0 {largeArc} 1 {x1 * MM2PX} {y1 * MM2PX}" {stroke}/>
+            <path d=" M {x0} {y0} A {radius} {radius} 0 {largeArc} 1 {x1} {y1}" {stroke}/>
         """
         self.inc_bounds(cx - radius, cy - radius)
         self.inc_bounds(cx + radius, cy + radius)
 
     def write(self):
-        minx = self.bounds[0] - self.margin
-        miny = self.bounds[1] - self.margin
-        maxx = self.bounds[2] + self.margin
-        maxy = self.bounds[3] + self.margin
-        width = maxx - minx
-        height = maxy - miny
-        s = f'<svg  version="1.1" xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="{minx}mm {miny}mm {maxx}mm {maxy}mm">'
+        minx = self.bounds[0]
+        miny = self.bounds[1]
+        maxx = math.ceil(self.bounds[2] + self.margin)
+        maxy = math.ceil(self.bounds[3] + self.margin)
+        assert minx == 0 and miny == 0
+        width = maxx
+        height = maxy
+        s = f'<svg  version="1.1" xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="0 0 {maxx} {maxy}">'
         s += self.content
         s += f'</svg>'
 
@@ -270,7 +268,7 @@ def main():
                 for subStep in range(0, subSteps):
                     x0, y0 = pinHolePosition(0, subStep)
                     x1, y1 = pinHolePosition(steps - 1, subStep)
-                    d.line(x0, y0, x1, y1, d.GUIDE, 'stroke-dasharray="10,10" stroke-width="0.5"')
+                    d.line(x0, y0, x1, y1, d.GUIDE, extra='stroke-dasharray="3,3"')
 
             # Per-step/major guides
             if shape != SH_LINE:
@@ -278,18 +276,18 @@ def main():
                     for subStep in range(1, subSteps):
                         x0, y0 = pinHolePosition(step, subStep - 1)
                         x1, y1 = pinHolePosition(step, subStep)
-                        d.line(x0, y0, x1, y1, d.GUIDE, 'stroke-dasharray="5, 5" stroke-width="0.25"')
+                        d.line(x0, y0, x1, y1, d.GUIDE, extra='stroke-dasharray="2,2"')
 
             # Per-step labels
             for step in range(0, steps):
                 s = unitStr(minRadius + step * stepSize)
                 x, y = pinHolePosition(step, 0)
-                d.text(0, 0, s, anchor="end", fs=6, color=d.MARK, extra=f'transform="translate({(x + 2) *3.7795}, {(y + 5)*MM2PX}) rotate(270)"')
+                d.text(0, 0, s, anchor="end", fs=6, color=d.MARK, extra=f'transform="translate({(x + 2)}, {(y + 5)}) rotate(270)"')
                 d.line(x, y + 1, x, y + 4, d.MARK)
                 if shape != SH_LINE:
                     s = unitStr(minRadius + step * stepSize + (subSteps - 1) * stepSize / subSteps)
                     x, y = pinHolePosition(step, subSteps - 1)
-                    d.text(0, 0, s, anchor="start", fs=4, color=d.MARK, extra=f'transform="translate({(x + 2) *3.7795}, {(y - 5)*MM2PX}) rotate(270)"')
+                    d.text(0, 0, s, anchor="start", fs=4, color=d.MARK, extra=f'transform="translate({(x + 2)}, {(y - 5)}) rotate(270)"')
                     d.line(x, y - 1, x, y - 4, d.MARK)
 
             if shape != SH_LINE:
@@ -308,7 +306,7 @@ def main():
                         x, y = pinHolePosition(step, subStep)
                         s = "+" + unitStr(subStep * stepSize / subSteps)
                         d.text(0, 0, s, anchor="start", fs=3, color=d.MARK,
-                               extra=f'transform="translate({(x + 1) * 3.7795}, {(y - 2) * 3.7795}) rotate(270)"')
+                               extra=f'transform="translate({(x + 1)}, {(y - 2)}) rotate(270)"')
 
     def outline(cx, cy):
         # draw shape around
@@ -317,7 +315,7 @@ def main():
         scd = compRadius(steps, 0)    # small circle distance
 
         if shape in [SH_NARROW, SH_LINE]:
-            # Angle for the line adjactent to two circles
+            # Angle for the line adjacent to two circles
             rd = bcr - scr  # radius difference triangle
             ang = math.acos(rd / scd)
             dbg(ang)
