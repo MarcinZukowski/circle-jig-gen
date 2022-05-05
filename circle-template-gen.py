@@ -35,6 +35,7 @@ def main():
     numSteps = (maxRadius - minRadius) / stepSize
     assert numSteps == int(numSteps)
     numSteps = int(numSteps)
+    assert minRadius >= stepSize
 
     d = Drawer()
 
@@ -44,6 +45,10 @@ def main():
 
     cx = 10 + maxRadius
     cy = 10 + maxRadius
+
+    if minRadius > stepSize:
+        # Draw an extra initial arc
+        d.arc(cx, cy, minRadius - stepSize, 45, 45, color=d.CUT, degrees=True, reverse=True)
 
     for step in range(0, numSteps + 1):
         radius = minRadius + step * stepSize
@@ -109,8 +114,10 @@ def main():
         d.line(cx - y2, cy - x2, cx - y3, cy - x3, d.CUT)
     else:
         # Final cut
-        d.line(cx, cy, cx + maxRadius, cy, d.CUT)
-        d.line(cx, cy, cx, cy - maxRadius, d.CUT)
+        x0, y0 = minRadius - stepSize, 0
+        x1, y1 = maxRadius, 0
+        d.line(cx + x0, cy + y0, cx + x1, cy + y1, d.CUT)
+        d.line(cx - y0, cy - x0, cx + y1, cy - x1, d.CUT)
 
     print(d.toSVG())
 
