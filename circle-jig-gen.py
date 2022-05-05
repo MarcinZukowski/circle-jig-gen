@@ -201,10 +201,17 @@ def main():
 
         else:
             # "Rectangle"
+            rounding = 2
             d.arc(cx, cy, bcr, math.pi / 2, 0, color=d.CUT)
-            d.line(cx, cy + bcr, cx + scd + scr, cy + bcr, color=d.CUT)
-            d.line(cx, cy - bcr, cx + scd + scr, cy - bcr, color=d.CUT)
-            d.line(cx + scd + scr, cy - bcr, cx + scd + scr, cy + bcr, color=d.CUT)
+            x0 = cx
+            y0 = cx - bcr
+            x1 = cx + scd + scr
+            y1 = cy + bcr
+            d.line(x0, y0, x1 - rounding, y0, color=d.CUT)
+            d.line(x0, y1, x1 - rounding, y1, color=d.CUT)
+            d.line(x1, y0 + rounding, x1, y1 - rounding, color=d.CUT)
+            d.arc(x1 - rounding, y0 + rounding, rounding, 45, 45, color=d.CUT, reverse=True, degrees=True)
+            d.arc(x1 - rounding, y1 - rounding, rounding, 45, -45, color=d.CUT, reverse=True, degrees=True)
 
     def support(cx, cy):
         # draw shape around the router base
