@@ -4,7 +4,7 @@ import argparse
 import math
 import sys
 
-from utils import Drawer, dbg
+from utils import Drawer, dbg, inches, unit, unitStr
 
 SH_NARROW = "narrow"
 SH_WIDE = "wide"
@@ -54,42 +54,6 @@ def main():
 
     args = parser.parse_args()
     inches = args.inches
-
-    # Converts to mm
-    def unit(v):
-        if v.endswith("mm"):
-            return float(v[:-2])
-        if v.endswith("in"):
-            return float(v[:-2]) * 25.4
-        v = float(v)
-        if inches:
-            return v * 25.4
-        return v
-
-    def unitStr(v):
-        if v == 0:
-            return "0"
-        if inches:
-            v /= 25.4
-            v = round(v * 10000000) / 10000000
-            pi = int(v)
-            pf = v - pi
-            if pf == 0:
-                return f"{pi}"
-            s = str(v)
-            for frac in [2, 4, 8, 16, 32, 64, 128]:
-                mu = pf * frac
-                if mu == int(mu):
-                    s = f"{int(mu)}/{frac}"
-                    if pi > 0:
-                        s = f"{pi} {s}"
-                    return s
-            return s
-        else:
-            v = round(v * 100) / 100
-            if v == int(v):
-                return str(int(v))
-            return str(v)
 
     minRadius = unit(args.minRadius)
     bitDiam = unit(args.bitDiam)
@@ -348,7 +312,5 @@ def main():
     print(d.toSVG())
 
 
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()

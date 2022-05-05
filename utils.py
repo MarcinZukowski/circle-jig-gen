@@ -2,13 +2,58 @@ import math
 import sys
 import xml.etree.ElementTree as ET
 
+inches = False
+
+
+# Converts to mm
+def unit(v):
+    if v.endswith("mm"):
+        return float(v[:-2])
+    if v.endswith("cm"):
+        return float(v[:-2]) * 10
+    if v.endswith("in"):
+        return float(v[:-2]) * 25.4
+    v = float(v)
+    if inches:
+        return v * 25.4
+    return v
+
+
+# Formats as string
+def unitStr(v):
+    if v == 0:
+        return "0"
+    if inches:
+        v /= 25.4
+        v = round(v * 10000000) / 10000000
+        pi = int(v)
+        pf = v - pi
+        if pf == 0:
+            return f"{pi}"
+        s = str(v)
+        for frac in [2, 4, 8, 16, 32, 64, 128]:
+            mu = pf * frac
+            if mu == int(mu):
+                s = f"{int(mu)}/{frac}"
+                if pi > 0:
+                    s = f"{pi} {s}"
+                return s
+        return s
+    else:
+        v = round(v * 100) / 100
+        if v == int(v):
+            return str(int(v))
+        return str(v)
+
 
 def dbg(s):
     print(str(s), file=sys.stderr)
 
+
 def err(s):
     print(str(s), file=sys.stderr)
     sys.exit(0)
+
 
 class Drawer:
 
@@ -87,7 +132,7 @@ class Drawer:
         miny = self.bounds[1]
         maxx = math.ceil(self.bounds[2] + self.margin)
         maxy = math.ceil(self.bounds[3] + self.margin)
-        assert minx == 0 and miny == 0
+        assert minx == 0 and miny == 0, f'minx={minx} miny={miny}'
         width = maxx
         height = maxy
         s = f'<svg  version="1.1" xmlns="http://www.w3.org/2000/svg" width="{width}mm" height="{height}mm" viewBox="0 0 {maxx} {maxy}">'
